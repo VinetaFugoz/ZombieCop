@@ -1,4 +1,5 @@
 import SidesEnum.*
+import entities.Player
 import graphics.SpriteSheet
 import graphics.UI
 import world.Camera
@@ -39,9 +40,10 @@ class Game : Canvas(), Runnable, KeyListener {
         private const val TIME_PER_FRAME: Long = ONE_SECOND_IN_NANOSECONDS / TARGET_FPS
 
         val SPRITE_SHEET = SpriteSheet("/sprite_sheet.png")
-        val BULLET: BufferedImage = SPRITE_SHEET.getSprite(96,18,4, 13)
-        val PLAYER: Player = Player(SPRITE_SHEET.getSprite(0, 0, 16, 16), 0, 0)
-        val WORLD: World = World("/map.png")
+
+        val BULLET: BufferedImage = SPRITE_SHEET.getSprite(32,122,4, 12)
+        var PLAYER: Player = Player(SPRITE_SHEET.getSprite(0, 0, 16, 16), 0, 0)
+        var WORLD: World = World("/map.png")
     }
 
     init {
@@ -130,6 +132,7 @@ class Game : Canvas(), Runnable, KeyListener {
         gameImage.graphics.run {
             color = Color.BLACK
             fillRect(0, 0, WIDTH, HEIGHT)
+
             WORLD.draw(this)
             PLAYER.draw(this)
             ui.draw(this as Graphics2D)

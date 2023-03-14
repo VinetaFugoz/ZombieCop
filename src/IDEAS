@@ -1,6 +1,6 @@
 #1 - Sprites
 #2 - Pause, Game Over and Start Menu
-#3 - Player animation
+#3 - entities.Player animation
 #4 - Controlled by keyboard
 #5 - Shooting system
 #6 - Map creating system

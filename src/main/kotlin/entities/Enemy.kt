@@ -4,7 +4,6 @@ import Animation
 import Game
 import Game.Companion.PLAYER
 import Game.Companion.SPRITE_SHEET
-import Player
 import SidesEnum.*
 import world.*
 import java.awt.Graphics
@@ -23,61 +22,58 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     }
 
     private val enemyFront: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(32, 50, 16, 16),
-        SPRITE_SHEET.getSprite(32, 67, 16, 16),
-        SPRITE_SHEET.getSprite(32, 50, 16, 16),
-        SPRITE_SHEET.getSprite(32, 84, 16, 16)
+        SPRITE_SHEET.getSprite(32, 51, 16, 16),
+        SPRITE_SHEET.getSprite(32, 68, 16, 16),
+        SPRITE_SHEET.getSprite(32, 51, 16, 16),
+        SPRITE_SHEET.getSprite(32, 85, 16, 16)
     )
     private val enemyBack: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(48, 50, 16, 16),
-        SPRITE_SHEET.getSprite(48, 67, 16, 16),
-        SPRITE_SHEET.getSprite(48, 50, 16, 16),
-        SPRITE_SHEET.getSprite(48, 84, 16, 16)
+        SPRITE_SHEET.getSprite(48, 51, 16, 16),
+        SPRITE_SHEET.getSprite(48, 68, 16, 16),
+        SPRITE_SHEET.getSprite(48, 51, 16, 16),
+        SPRITE_SHEET.getSprite(48, 85, 16, 16)
     )
     private val enemyLeft: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(64, 50, 16, 16),
-        SPRITE_SHEET.getSprite(64, 67, 16, 16),
-        SPRITE_SHEET.getSprite(64, 50, 16, 16),
-        SPRITE_SHEET.getSprite(64, 84, 16, 16)
+        SPRITE_SHEET.getSprite(64, 51, 16, 16),
+        SPRITE_SHEET.getSprite(64, 68, 16, 16),
+        SPRITE_SHEET.getSprite(64, 51, 16, 16),
+        SPRITE_SHEET.getSprite(64, 85, 16, 16)
     )
     private val enemyRight: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(80, 50, 16, 16),
-        SPRITE_SHEET.getSprite(80, 67, 16, 16),
-        SPRITE_SHEET.getSprite(80, 50, 16, 16),
-        SPRITE_SHEET.getSprite(80, 84, 16, 16)
+        SPRITE_SHEET.getSprite(80, 51, 16, 16),
+        SPRITE_SHEET.getSprite(80, 68, 16, 16),
+        SPRITE_SHEET.getSprite(80, 51, 16, 16),
+        SPRITE_SHEET.getSprite(80, 85, 16, 16)
     )
 
     override fun update() {
-        collidingWithFloor(this@Enemy)
         if (Game.random.nextInt(100) < 50) move()
     }
 
-    private fun collidingWithFloor(rectangle: Rectangle) = World.floors.forEach { floor -> floor.collision(rectangle) }
-
     private fun move() {
-        if (x < PLAYER.x && !isColliding(x + speed, y)) {
-            x += speed
-            lastSide = RIGHT.ordinal
+        if (PLAYER.y in (y-32)..y  || PLAYER.y in y..(y+48) ) {
+            if (x < PLAYER.x && !isColliding(x + speed, y)) {
+                x += speed
+                lastSide = RIGHT.ordinal
+            }
+            if (x > PLAYER.x && !isColliding(x - speed, y)) {
+                x -= speed
+                lastSide = LEFT.ordinal
+            }
+            if (y < PLAYER.y && !isColliding(x, y + speed)) {
+                y += speed
+                lastSide = DOWN.ordinal
+            }
+            if (y > PLAYER.y && !isColliding(x, y - speed)) {
+                y -= speed
+                lastSide = UP.ordinal
+            }
+            animation.animate()
         }
-        if (x > PLAYER.x && !isColliding(x - speed, y)) {
-            x -= speed
-            lastSide = LEFT.ordinal
-        }
-        if (y < PLAYER.y && !isColliding(x, y + speed)) {
-            y += speed
-            lastSide = DOWN.ordinal
-        }
-        if (y > PLAYER.y && !isColliding(x, y - speed)) {
-            y -= speed
-            lastSide = UP.ordinal
-        }
-        animation.animate()
     }
 
     private fun isColliding(nextX: Int, nextY: Int): Boolean {
         val enemyNextBounds = Rectangle(nextX, nextY, width, height)
-
-        collidingWithFloor(enemyNextBounds)
 
         if (enemyNextBounds.intersects(PLAYER)) { attackPlayer(); return true }
 
@@ -119,5 +115,4 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     private fun graphicsDrawImage(image: BufferedImage, graphics: Graphics) {
         graphics.drawImage(image, x - Camera.x, y - Camera.y, null)
     }
-
 }
