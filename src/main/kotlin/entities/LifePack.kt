@@ -1,7 +1,7 @@
 package entities
 
-import Game.Companion.PLAYER
 import world.World
+import world.World.Companion.player
 import java.awt.image.BufferedImage
 
 class LifePack(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
@@ -10,7 +10,7 @@ class LifePack(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
         fun collision() {
             World.lifePacks.forEach { lifePack ->
-                if (lifePack.intersects(PLAYER)) {
+                if (lifePack.intersects(player)) {
                     setLife()
                     World.lifePacks.remove(lifePack)
                     return

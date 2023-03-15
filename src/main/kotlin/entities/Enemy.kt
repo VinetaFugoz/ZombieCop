@@ -2,69 +2,68 @@ package entities
 
 import Animation
 import Game
-import Game.Companion.PLAYER
 import Game.Companion.SPRITE_SHEET
 import SidesEnum.*
 import world.*
+import world.World.Companion.player
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 
 class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
+    private var tookDamage: Boolean = false
     private val damage: Int = 5
     private var lastSide: Int = DOWN.ordinal
     private val animation: Animation
+    var life: kotlin.Double = 0.0
+
 
     init {
+        life = 20.0
         speed = 2
         animation = Animation(speed, 4)
     }
 
-    private val enemyFront: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(32, 51, 16, 16),
-        SPRITE_SHEET.getSprite(32, 68, 16, 16),
-        SPRITE_SHEET.getSprite(32, 51, 16, 16),
-        SPRITE_SHEET.getSprite(32, 85, 16, 16)
+    private val enemyFront: List<BufferedImage> = loadEnemyImages(32)
+    private val enemyBack: List<BufferedImage> = loadEnemyImages(48)
+    private val enemyLeft: List<BufferedImage> = loadEnemyImages(32)
+    private val enemyRight: List<BufferedImage> = loadEnemyImages(80)
+    private val enemyDamage: List<BufferedImage> = listOf(
+        SPRITE_SHEET.getSprite(96, 51, 16, 16),
+        SPRITE_SHEET.getSprite(112, 51, 16, 16),
+        SPRITE_SHEET.getSprite(128, 51, 16, 16),
+        SPRITE_SHEET.getSprite(144, 51, 16, 16)
     )
-    private val enemyBack: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(48, 51, 16, 16),
-        SPRITE_SHEET.getSprite(48, 68, 16, 16),
-        SPRITE_SHEET.getSprite(48, 51, 16, 16),
-        SPRITE_SHEET.getSprite(48, 85, 16, 16)
-    )
-    private val enemyLeft: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(64, 51, 16, 16),
-        SPRITE_SHEET.getSprite(64, 68, 16, 16),
-        SPRITE_SHEET.getSprite(64, 51, 16, 16),
-        SPRITE_SHEET.getSprite(64, 85, 16, 16)
-    )
-    private val enemyRight: List<BufferedImage> = listOf(
-        SPRITE_SHEET.getSprite(80, 51, 16, 16),
-        SPRITE_SHEET.getSprite(80, 68, 16, 16),
-        SPRITE_SHEET.getSprite(80, 51, 16, 16),
-        SPRITE_SHEET.getSprite(80, 85, 16, 16)
-    )
+
+    private fun loadEnemyImages(x: Int): List<BufferedImage> {
+        return listOf(
+            SPRITE_SHEET.getSprite(x, 51, 16, 16),
+            SPRITE_SHEET.getSprite(x, 68, 16, 16),
+            SPRITE_SHEET.getSprite(x, 51, 16, 16),
+            SPRITE_SHEET.getSprite(x, 85, 16, 16)
+        )
+    }
 
     override fun update() {
         if (Game.random.nextInt(100) < 50) move()
     }
 
     private fun move() {
-        if (PLAYER.y in (y-32)..y  || PLAYER.y in y..(y+48) ) {
-            if (x < PLAYER.x && !isColliding(x + speed, y)) {
+        if (player.y in (y - 32)..y || player.y in y..(y + 48)) {
+            if (x < player.x && !isColliding(x + speed, y)) {
                 x += speed
                 lastSide = RIGHT.ordinal
             }
-            if (x > PLAYER.x && !isColliding(x - speed, y)) {
+            if (x > player.x && !isColliding(x - speed, y)) {
                 x -= speed
                 lastSide = LEFT.ordinal
             }
-            if (y < PLAYER.y && !isColliding(x, y + speed)) {
+            if (y < player.y && !isColliding(x, y + speed)) {
                 y += speed
                 lastSide = DOWN.ordinal
             }
-            if (y > PLAYER.y && !isColliding(x, y - speed)) {
+            if (y > player.y && !isColliding(x, y - speed)) {
                 y -= speed
                 lastSide = UP.ordinal
             }
@@ -75,7 +74,9 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     private fun isColliding(nextX: Int, nextY: Int): Boolean {
         val enemyNextBounds = Rectangle(nextX, nextY, width, height)
 
-        if (enemyNextBounds.intersects(PLAYER)) { attackPlayer(); return true }
+        if (enemyNextBounds.intersects(player)) {
+            attackPlayer(); return true
+        }
 
         World.walls.forEach { wall -> if (enemyNextBounds.intersects(wall)) return true }
 
@@ -86,10 +87,10 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
     private fun attackPlayer() {
         if (Game.random.nextInt(100) <= 10)
-            if (Player.life > damage) PLAYER.loseLife(this@Enemy.damage)
+            if (Player.life > damage) player.loseLife(this@Enemy.damage)
             else {
-                PLAYER.loseLife(this@Enemy.damage)
-                PLAYER.die()
+                player.loseLife(this@Enemy.damage)
+                player.die()
             }
     }
 
@@ -101,7 +102,19 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
             RIGHT.ordinal -> graphicsDrawImage(enemyRight[animation.currentAnimationIndex], graphics)
         }
         drawLastSide(graphics)
+        if (tookDamage) drawEnemyDamage(graphics)
     }
+
+    private fun drawEnemyDamage(graphics: Graphics) {
+        when (lastSide) {
+            UP.ordinal -> graphicsDrawImage(enemyDamage[1], graphics)
+            DOWN.ordinal -> graphicsDrawImage(enemyDamage[0], graphics)
+            LEFT.ordinal -> graphicsDrawImage(enemyDamage[2], graphics)
+            RIGHT.ordinal -> graphicsDrawImage(enemyDamage[3], graphics)
+        }
+        tookDamage = false
+    }
+
 
     private fun drawLastSide(graphics: Graphics) {
         when (lastSide) {
@@ -114,5 +127,16 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
     private fun graphicsDrawImage(image: BufferedImage, graphics: Graphics) {
         graphics.drawImage(image, x - Camera.x, y - Camera.y, null)
+    }
+
+    fun loseLife(damage: Int) {
+        tookDamage = true
+        life -= damage
+        if (life > 0) println("Enemy life: ${Player.life}")
+    }
+
+    fun die() {
+        println("Enemy is dead")
+        World.enemies.remove(this@Enemy)
     }
 }

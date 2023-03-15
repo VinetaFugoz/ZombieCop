@@ -5,6 +5,7 @@ import entities.*
 import entities.Entity.Companion.AMMO
 import entities.Entity.Companion.ENEMY
 import entities.Entity.Companion.LIFE_PACK
+import entities.Entity.Companion.PLAYER
 import entities.Entity.Companion.REVOLVER_RIGHT
 import world.Tile.Companion.FLOOR
 import world.Tile.Companion.TILE_SIZE
@@ -19,7 +20,8 @@ class World(path: String) {
     private var mapPixels: MutableList<Triple<Int, Int, Int>> = mutableListOf()
 
     companion object {
-
+        lateinit var player: Player
+        lateinit var bullets: MutableList<Bullet>
         lateinit var ammunition: MutableList<Ammo>
         lateinit var enemies: MutableList<Enemy>
         lateinit var lifePacks: MutableList<LifePack>
@@ -48,6 +50,7 @@ class World(path: String) {
     }
 
     private fun initWorld() {
+        bullets = mutableListOf()
         ammunition = mutableListOf()
         enemies = mutableListOf()
         lifePacks = mutableListOf()
@@ -57,7 +60,6 @@ class World(path: String) {
     }
 
     private fun addMapPixels(map: BufferedImage) {
-
         map.run {
 
             for (x: Int in 0 until width) {
@@ -75,7 +77,7 @@ class World(path: String) {
         mapPixels.forEach { pixel ->
             pixel.run {
                 when (first) {
-                    0xFF0026FF.toInt() -> { Game.PLAYER.x = second; Game.PLAYER.y = third }
+                    0xFF0026FF.toInt() -> { player = Player(PLAYER, second, third)}
                     0xFFFF6A00.toInt() -> weapons.add(Weapon(REVOLVER_RIGHT, second, third))
                     0xFFFF0000.toInt() -> enemies.add(Enemy(ENEMY, second, third))
                     0xFF00FF21.toInt() -> lifePacks.add(LifePack(LIFE_PACK, second, third))
@@ -88,7 +90,11 @@ class World(path: String) {
         }
     }
 
-    fun update() = enemies.forEach { enemy -> enemy.update() }
+    fun update() {
+        enemies.forEach { enemy -> enemy.update() }
+        bullets.forEach { bullet ->  bullet.update()}
+        player.update()
+    }
 
     fun draw(graphics: Graphics) {
         fillTilesAndEntitiesMap()
@@ -97,6 +103,7 @@ class World(path: String) {
         Ammo.collision()
         LifePack.collision()
         Weapon.collision()
+        Bullet.collision()
 
         drawObjectsInCamera(wallMap, graphics)
         drawObjectsInCamera(floorMap, graphics)
@@ -104,6 +111,9 @@ class World(path: String) {
         drawObjectsInCamera(lifePackMap, graphics)
         drawObjectsInCamera(ammunitionMap, graphics)
         drawObjectsInCamera(enemyMap, graphics)
+
+        player.draw(graphics)
+        bullets.forEach { bullet -> bullet.draw(graphics) }
     }
 
     private fun fillTilesAndEntitiesMap() {

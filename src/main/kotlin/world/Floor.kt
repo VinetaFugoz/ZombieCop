@@ -1,22 +1,22 @@
 package world
 
-import Game
 import entities.Enemy
+import world.World.Companion.player
+import java.awt.Rectangle
 import java.awt.image.BufferedImage
 
-class Floor(sprite: BufferedImage, x: Int, y: Int): Tile(sprite, x, y) {
+class Floor(sprite: BufferedImage, x: Int, y: Int) : Tile(sprite, x, y) {
 
     companion object {
         fun collision() {
             World.floors.forEach { floor ->
-                World.enemies.forEach { enemy ->
-                    collisionWithThis(enemy, floor)
-                }
+                if (World.enemies.isEmpty()) collisionWithThis(player, floor)
+                else World.enemies.forEach { enemy -> collisionWithThis(enemy, floor) }
             }
         }
 
-        private fun collisionWithThis(enemy: Enemy, floor: Floor) {
-            if (floor.intersects(enemy) || floor.intersects(Game.PLAYER)) {
+        private fun collisionWithThis(rectangle: Rectangle, floor: Floor) {
+            if (floor.intersects(rectangle) || floor.intersects(player)) {
                 floor.sprite = FLOOR[1]
             } else {
                 floor.sprite = FLOOR[0]

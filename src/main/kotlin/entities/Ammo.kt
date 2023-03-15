@@ -1,16 +1,16 @@
 package entities
 
-import Game.Companion.PLAYER
 import world.World
+import world.World.Companion.player
 import java.awt.image.BufferedImage
 
 class Ammo(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     companion object {
-        private const val STORED_AMMO = 5
+        private const val STORED_AMMO = 10
 
         fun collision() {
             World.ammunition.forEach { ammo ->
-                if (ammo.intersects(PLAYER)) {
+                if (ammo.intersects(player)) {
                     setAmmunition()
                     World.ammunition.remove(ammo)
                     return

@@ -16,6 +16,7 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     var goDown: Boolean = false
     var goLeft: Boolean = false
     var goRight: Boolean = false
+    var shoot: Boolean = false
 
     private var tookDamage: Boolean = false
     private var hasGun: Boolean = false
@@ -62,9 +63,48 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
             SPRITE_SHEET.getSprite(x, 34, 16, 16)
         )
     }
+
     override fun update() {
         movePlayer()
+        if (shoot && hasGun) shoot()
         animation.animate()
+    }
+
+    private fun shoot() {
+        var bulletX: Int = 0
+        var bulletY: Int = 0
+        var directionX = 0
+        var directionY = 0
+
+        if (bullets >= 0) {
+            bullets -= 1
+
+            when (lastSide) {
+                UP.ordinal -> {
+                    directionY = -1
+                    bulletX = x + 12
+                    bulletY = y + 2
+                }
+                DOWN.ordinal -> {
+                    directionY = 1
+                    bulletX = x + 2
+                    bulletY = y + 11
+                }
+                LEFT.ordinal -> {
+                    directionX = -1
+                    bulletX = x - 10
+                    bulletY = y + 6
+                }
+                RIGHT.ordinal -> {
+                    directionX = 1
+                    bulletX = x + 16
+                    bulletY = y + 6
+                }
+            }
+
+            World.bullets.add(Bullet(bulletX , bulletY, 2, 2, directionX, directionY))
+        }
+        shoot = false
     }
 
     private fun movePlayer() {
@@ -151,7 +191,6 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
     fun die() {
         println("entities.Player is dead")
-        Game.PLAYER = Player(SPRITE_SHEET.getSprite(0, 0, 16, 16), 0, 0)
         Game.WORLD = World("/map.png")
         return
     }

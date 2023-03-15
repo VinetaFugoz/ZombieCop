@@ -1,9 +1,8 @@
 package world
 
-import Game
 import Game.Companion.HEIGHT
-import Game.Companion.PLAYER
 import Game.Companion.WIDTH
+import world.World.Companion.player
 
 object Camera {
     var x: Int = 0
@@ -15,8 +14,8 @@ object Camera {
     var MAX_Y: Int = 0
 
     fun update() {
-        x = (PLAYER.x - WIDTH / 2)
-        y = (PLAYER.y - HEIGHT / 2)
+        x = (player.x - WIDTH / 2)
+        y = (player.y - HEIGHT / 2)
 
         if (x < MIN_X) x = MIN_X
         if (y < MIN_Y) y = MIN_Y

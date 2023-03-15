@@ -1,6 +1,6 @@
 package graphics
 
-import Game.Companion.BULLET
+import entities.Entity.Companion.BULLET
 import entities.Player
 import java.awt.*
 
@@ -30,13 +30,15 @@ class UI {
         graphics.composite = (AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f))
 
         for (bullet: Int in 0..Player.MAX_BULLETS) {
-            graphics.drawImage(BULLET, 5 + (bullet * 2), 15, 1, 6,null)
+            graphics.color = Color.YELLOW
+            graphics.drawRect(4 + (bullet * 3), 15, 1, 6)
         }
 
         graphics.composite = (AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f))
 
         for (bullet: Int in 0..Player.bullets) {
-            graphics.drawImage(BULLET, 5 + (bullet * 2), 15, 1, 6, null)
+            graphics.color = Color.YELLOW
+            graphics.drawRect(4 + (bullet * 3), 15, 1, 6)
         }
     }
 }

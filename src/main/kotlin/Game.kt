@@ -1,14 +1,10 @@
 import SidesEnum.*
-import entities.Player
 import graphics.SpriteSheet
 import graphics.UI
 import world.Camera
 import world.World
-import java.awt.Canvas
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
+import world.World.Companion.player
+import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.*
 import java.awt.event.KeyListener
@@ -41,8 +37,6 @@ class Game : Canvas(), Runnable, KeyListener {
 
         val SPRITE_SHEET = SpriteSheet("/sprite_sheet.png")
 
-        val BULLET: BufferedImage = SPRITE_SHEET.getSprite(32,122,4, 12)
-        var PLAYER: Player = Player(SPRITE_SHEET.getSprite(0, 0, 16, 16), 0, 0)
         var WORLD: World = World("/map.png")
     }
 
@@ -122,7 +116,6 @@ class Game : Canvas(), Runnable, KeyListener {
 
     private fun updateGame() {
         WORLD.update()
-        PLAYER.update()
         Camera.update()
     }
 
@@ -134,7 +127,6 @@ class Game : Canvas(), Runnable, KeyListener {
             fillRect(0, 0, WIDTH, HEIGHT)
 
             WORLD.draw(this)
-            PLAYER.draw(this)
             ui.draw(this as Graphics2D)
             dispose()
         }
@@ -151,25 +143,29 @@ class Game : Canvas(), Runnable, KeyListener {
 
     override fun keyPressed(event: KeyEvent) {
         when (event.keyCode) {
-            VK_UP, VK_W -> {PLAYER.goUp = true; PLAYER.lastSide = UP.ordinal}
-            VK_DOWN, VK_S -> {PLAYER.goDown = true; PLAYER.lastSide = DOWN.ordinal}
+            VK_UP, VK_W -> {player.goUp = true; player.lastSide = UP.ordinal}
+            VK_DOWN, VK_S -> {player.goDown = true; player.lastSide = DOWN.ordinal}
         }
 
         when (event.keyCode) {
-            VK_LEFT, VK_A -> {PLAYER.goLeft = true; PLAYER.lastSide = LEFT.ordinal}
-            VK_RIGHT, VK_D -> {PLAYER.goRight = true; PLAYER.lastSide = RIGHT.ordinal}
+            VK_LEFT, VK_A -> {player.goLeft = true; player.lastSide = LEFT.ordinal}
+            VK_RIGHT, VK_D -> {player.goRight = true; player.lastSide = RIGHT.ordinal}
         }
+
+        if (event.keyCode == VK_SPACE) player.shoot = true
     }
 
     override fun keyReleased(event: KeyEvent) {
         when (event.keyCode) {
-            VK_UP, VK_W -> PLAYER.goUp = false
-            VK_DOWN, VK_S -> PLAYER.goDown = false
+            VK_UP, VK_W -> player.goUp = false
+            VK_DOWN, VK_S -> player.goDown = false
         }
 
         when (event.keyCode) {
-            VK_LEFT, VK_A -> PLAYER.goLeft = false
-            VK_RIGHT, VK_D -> PLAYER.goRight = false
+            VK_LEFT, VK_A -> player.goLeft = false
+            VK_RIGHT, VK_D -> player.goRight = false
         }
+
+        if (event.keyCode == VK_SPACE) player.shoot = false
     }
 }
