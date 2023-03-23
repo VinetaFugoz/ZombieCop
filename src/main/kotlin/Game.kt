@@ -1,4 +1,7 @@
 import SidesEnum.*
+import entities.GameStateEnum
+import entities.GameStateEnum.*
+import entities.Player
 import graphics.SpriteSheet
 import graphics.UI
 import world.Camera
@@ -14,6 +17,7 @@ import java.lang.System.nanoTime
 import java.util.*
 import javax.swing.JFrame
 import javax.swing.JFrame.EXIT_ON_CLOSE
+import kotlin.system.exitProcess
 
 class Game : Canvas(), Runnable, KeyListener {
 
@@ -21,15 +25,21 @@ class Game : Canvas(), Runnable, KeyListener {
     private var shouldKeepRunning: Boolean = false
     private val gameImage: BufferedImage
     private val ui: UI
+    private var blinkAnimation: BlinkAnimation
 
     companion object {
         private const val GAME_TITLE = "Graphics"
 
         var random: Random = Random()
+        var goNextLevel: Boolean = false
+        var current_level = 1
+        var gameState: GameStateEnum = NORMAL
 
         const val WIDTH: Int = 160
         const val HEIGHT: Int = 120
         private const val SCALE: Int = 5
+
+        const val MAX_LEVEL = 2
 
         private const val TARGET_FPS: Int = 60
         private const val ONE_SECOND_IN_NANOSECONDS: Long = 1_000_000_000L
@@ -37,7 +47,7 @@ class Game : Canvas(), Runnable, KeyListener {
 
         val SPRITE_SHEET = SpriteSheet("/sprite_sheet.png")
 
-        var WORLD: World = World("/map.png")
+        var WORLD: World = World("/level$current_level.png")
     }
 
     init {
@@ -58,6 +68,7 @@ class Game : Canvas(), Runnable, KeyListener {
 
         createBufferStrategy(3)
         addKeyListener(this)
+        blinkAnimation = BlinkAnimation(5)
     }
 
     @Synchronized
@@ -69,8 +80,7 @@ class Game : Canvas(), Runnable, KeyListener {
 
     @Synchronized
     fun stop() {
-        gameThread.join()
-        shouldKeepRunning = false
+        exitProcess(0)
     }
 
     override fun run() = gameLoop()
@@ -115,8 +125,21 @@ class Game : Canvas(), Runnable, KeyListener {
     }
 
     private fun updateGame() {
+
         WORLD.update()
         Camera.update()
+
+        if (goNextLevel) {
+            if (current_level < MAX_LEVEL) {
+                current_level++
+                WORLD.level = "/level$current_level.png"
+                WORLD.initWorld()
+            } else {
+                gameState = CONGRATULATIONS
+            }
+
+            goNextLevel = false
+        }
     }
 
     private fun drawGame() {
@@ -125,9 +148,46 @@ class Game : Canvas(), Runnable, KeyListener {
         gameImage.graphics.run {
             color = Color.BLACK
             fillRect(0, 0, WIDTH, HEIGHT)
+            val enterMessage = "Press <Enter> to continue!"
+            val graphics2D: Graphics2D = this as Graphics2D
 
-            WORLD.draw(this)
-            ui.draw(this as Graphics2D)
+            when (gameState) {
+                NORMAL -> {
+                    WORLD.draw(this)
+                    ui.draw(graphics2D)
+                }
+
+                CONGRATULATIONS -> {
+                    WORLD.draw(this)
+                    ui.draw(this)
+                    color = Color.BLUE
+                    fillRect(0, 0, WIDTH, HEIGHT)
+                    color = Color.WHITE
+                    font = Font("arial", Font.BOLD, 14)
+                    drawString(CONGRATULATIONS.getText(), WIDTH / CONGRATULATIONS.getText().length, HEIGHT / 2)
+                    font = Font("arial", Font.BOLD, 10)
+                    if (!blinkAnimation.animate()) drawString(enterMessage, WIDTH / enterMessage.length, HEIGHT / 2 + 14)
+                }
+
+                GAME_OVER -> {
+                    WORLD.draw(this)
+                    ui.draw(this)
+                    graphics2D.apply {
+                        color = Color.BLACK
+                        composite = (AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f))
+                        fillRect(0, 0, WIDTH, HEIGHT)
+                        color = Color.WHITE
+                        font = Font("arial", Font.BOLD, 20)
+                        drawString(GAME_OVER.getText(), WIDTH / GAME_OVER.getText().length, HEIGHT / 2)
+
+                        font = Font("arial", Font.BOLD, 10)
+                        if (!blinkAnimation.animate()) drawString(enterMessage, WIDTH / enterMessage.length * 2, HEIGHT / 2 + 20)
+                        composite = (AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f))
+
+                    }
+                }
+            }
+
             dispose()
         }
 
@@ -143,16 +203,33 @@ class Game : Canvas(), Runnable, KeyListener {
 
     override fun keyPressed(event: KeyEvent) {
         when (event.keyCode) {
-            VK_UP, VK_W -> {player.goUp = true; player.lastSide = UP.ordinal}
-            VK_DOWN, VK_S -> {player.goDown = true; player.lastSide = DOWN.ordinal}
+            VK_UP, VK_W -> {
+                player.goUp = true; player.lastSide = UP.ordinal
+            }
+
+            VK_DOWN, VK_S -> {
+                player.goDown = true; player.lastSide = DOWN.ordinal
+            }
         }
 
         when (event.keyCode) {
-            VK_LEFT, VK_A -> {player.goLeft = true; player.lastSide = LEFT.ordinal}
-            VK_RIGHT, VK_D -> {player.goRight = true; player.lastSide = RIGHT.ordinal}
+            VK_LEFT, VK_A -> {
+                player.goLeft = true; player.lastSide = LEFT.ordinal
+            }
+
+            VK_RIGHT, VK_D -> {
+                player.goRight = true; player.lastSide = RIGHT.ordinal
+            }
         }
 
         if (event.keyCode == VK_SPACE) player.shoot = true
+
+        if (event.keyCode == VK_ENTER && (gameState == GAME_OVER || gameState == CONGRATULATIONS)) {
+            current_level = 1
+            WORLD = World("/level$current_level.png")
+            gameState = NORMAL
+            Player.resetPlayer()
+        }
     }
 
     override fun keyReleased(event: KeyEvent) {

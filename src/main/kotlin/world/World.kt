@@ -4,9 +4,11 @@ import Game
 import entities.*
 import entities.Entity.Companion.AMMO
 import entities.Entity.Companion.ENEMY
+import entities.Entity.Companion.LIFE
 import entities.Entity.Companion.LIFE_PACK
 import entities.Entity.Companion.PLAYER
 import entities.Entity.Companion.REVOLVER_RIGHT
+import world.Tile.Companion.DOOR
 import world.Tile.Companion.FLOOR
 import world.Tile.Companion.TILE_SIZE
 import world.Tile.Companion.WALL
@@ -15,11 +17,11 @@ import java.awt.image.BufferedImage
 import java.io.IOException
 import javax.imageio.ImageIO
 
-class World(path: String) {
-
-    private var mapPixels: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+class World(var level: String) {
 
     companion object {
+        private var mapPixels: MutableList<Triple<Int, Int, Int>> = mutableListOf()
+
         lateinit var player: Player
         lateinit var bullets: MutableList<Bullet>
         lateinit var ammunition: MutableList<Ammo>
@@ -28,6 +30,8 @@ class World(path: String) {
         lateinit var weapons: MutableList<Weapon>
         lateinit var floors: MutableList<Floor>
         lateinit var walls: MutableList<Wall>
+        lateinit var doors: MutableList<Door>
+        lateinit var lives: MutableList<Life>
 
         lateinit var ammunitionMap: Map<Pair<Int, Int>, Ammo>
         lateinit var enemyMap: Map<Pair<Int, Int>, Enemy>
@@ -35,21 +39,15 @@ class World(path: String) {
         lateinit var weaponMap: Map<Pair<Int, Int>, Weapon>
         lateinit var floorMap: Map<Pair<Int, Int>, Floor>
         lateinit var wallMap: Map<Pair<Int, Int>, Wall>
+        lateinit var doorMap: Map<Pair<Int, Int>, Door>
+        var lifeMap: Map<Pair<Int, Int>, Life> = mapOf()
     }
 
     init {
         initWorld()
-        try {
-            val map: BufferedImage = ImageIO.read(javaClass.getResource(path))
-            addMapPixels(map)
-        } catch (exception: IOException) {
-            exception.printStackTrace()
-        }
-
-        addTilesAndEntities()
     }
 
-    private fun initWorld() {
+    fun initWorld() {
         bullets = mutableListOf()
         ammunition = mutableListOf()
         enemies = mutableListOf()
@@ -57,6 +55,37 @@ class World(path: String) {
         weapons = mutableListOf()
         floors = mutableListOf()
         walls = mutableListOf()
+        doors = mutableListOf()
+        mapPixels = mutableListOf()
+        lives = mutableListOf()
+
+        setLevel()
+        addTilesAndEntities()
+    }
+
+    fun restartWorld() {
+        bullets = mutableListOf()
+        ammunition = mutableListOf()
+        enemies = mutableListOf()
+        lifePacks = mutableListOf()
+        weapons = mutableListOf()
+        floors = mutableListOf()
+        walls = mutableListOf()
+        doors = mutableListOf()
+        mapPixels = mutableListOf()
+        if (lives.isEmpty()) lives = mutableListOf()
+
+        setLevel()
+        addTilesAndEntities()
+    }
+
+    private fun setLevel() {
+        try {
+            val map: BufferedImage = ImageIO.read(javaClass.getResource(level))
+            addMapPixels(map)
+        } catch (exception: IOException) {
+            exception.printStackTrace()
+        }
     }
 
     private fun addMapPixels(map: BufferedImage) {
@@ -77,12 +106,19 @@ class World(path: String) {
         mapPixels.forEach { pixel ->
             pixel.run {
                 when (first) {
-                    0xFF0026FF.toInt() -> { player = Player(PLAYER, second, third)}
-                    0xFFFF6A00.toInt() -> weapons.add(Weapon(REVOLVER_RIGHT, second, third))
+                    0xFF0026FF.toInt() -> {
+                        player = Player(PLAYER, second, third)
+                    }
+
+                    0xFFFF6A00.toInt() -> if (!Player.hasGun) weapons.add(Weapon(REVOLVER_RIGHT, second, third))
                     0xFFFF0000.toInt() -> enemies.add(Enemy(ENEMY, second, third))
                     0xFF00FF21.toInt() -> lifePacks.add(LifePack(LIFE_PACK, second, third))
                     0xFFFFD800.toInt() -> ammunition.add(Ammo(AMMO, second, third))
                     0xFFFFFFFF.toInt() -> walls.add(Wall(WALL, second, third))
+                    0xFF7C4412.toInt() -> doors.add(Door(DOOR[0], second, third))
+                    0xFFFF00D4.toInt() -> lifeMap[second to third].let {
+                        if (it == null) lives.add(Life(LIFE, second, third, true))
+                    }
                 }
 
                 if (first != 0xFFFFFFFF.toInt()) floors.add(Floor(FLOOR[0], second, third))
@@ -92,7 +128,7 @@ class World(path: String) {
 
     fun update() {
         enemies.forEach { enemy -> enemy.update() }
-        bullets.forEach { bullet ->  bullet.update()}
+        bullets.forEach { bullet -> bullet.update() }
         player.update()
     }
 
@@ -104,13 +140,19 @@ class World(path: String) {
         LifePack.collision()
         Weapon.collision()
         Bullet.collision()
+        Life.collision()
+        Door.collision()
 
         drawObjectsInCamera(wallMap, graphics)
         drawObjectsInCamera(floorMap, graphics)
+        drawObjectsInCamera(doorMap, graphics)
         drawObjectsInCamera(weaponMap, graphics)
         drawObjectsInCamera(lifePackMap, graphics)
         drawObjectsInCamera(ammunitionMap, graphics)
         drawObjectsInCamera(enemyMap, graphics)
+        val lifeMapEnabled: Map<Pair<Int, Int>, Life> = lifeMap.filter { life -> life.value.enabled }
+        drawObjectsInCamera(lifeMapEnabled, graphics)
+
 
         player.draw(graphics)
         bullets.forEach { bullet -> bullet.draw(graphics) }
@@ -123,6 +165,8 @@ class World(path: String) {
         weaponMap = weapons.associateBy { weapon -> weapon.x to weapon.y }
         floorMap = floors.associateBy { floor -> floor.x to floor.y }
         wallMap = walls.associateBy { wall -> wall.x to wall.y }
+        lifeMap = lives.associateBy { life -> life.x to life.y }
+        doorMap = doors.associateBy { door -> door.x to door.y }
     }
 
     private fun drawObjectsInCamera(map: Map<Pair<Int, Int>, Any>, graphics: Graphics) {

@@ -1,7 +1,6 @@
 package world
 
 import Game
-import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
@@ -23,6 +22,12 @@ open class Tile(
         )
 
         val WALL: BufferedImage = Game.SPRITE_SHEET.getSprite(16, 0, TILE_SIZE, TILE_SIZE)
+
+        val DOOR: Array<BufferedImage> = arrayOf(
+            Game.SPRITE_SHEET.getSprite(0, 33, TILE_SIZE, TILE_SIZE),
+            Game.SPRITE_SHEET.getSprite(0, 49, TILE_SIZE, TILE_SIZE),
+            Game.SPRITE_SHEET.getSprite(16, 49, TILE_SIZE, TILE_SIZE),
+        )
     }
 
     fun draw(graphics: Graphics) {

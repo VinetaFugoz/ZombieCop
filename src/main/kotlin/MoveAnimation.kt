@@ -1,5 +1,5 @@
 
-class Animation(speed: Int, size: Int) {
+class MoveAnimation(speed: Int, size: Int) {
     private var currentFrame: Int = 0
     private var maxFrame: Int = (5 / speed)
     var currentAnimationIndex: Int = 0

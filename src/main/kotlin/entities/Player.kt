@@ -1,9 +1,12 @@
 package entities
 
-import Animation
-import Game
+import BlinkAnimation
+import MoveAnimation
 import Game.Companion.SPRITE_SHEET
+import Game.Companion.WORLD
+import Game.Companion.gameState
 import SidesEnum.*
+import entities.GameStateEnum.GAME_OVER
 import world.Camera
 import world.World
 import java.awt.Graphics
@@ -19,29 +22,40 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     var shoot: Boolean = false
 
     private var tookDamage: Boolean = false
-    private var hasGun: Boolean = false
 
     var lastSide: Int = DOWN.ordinal
 
-    private val animation: Animation
+    private val moveAnimation: MoveAnimation
+    private var blinkAnimation: BlinkAnimation
 
     companion object {
         var life: kotlin.Double = 0.0
         var bullets: Int = 0
+        var lives: Int = 1
+        var hasGun: Boolean = false
+        var tookLife: Boolean = false
 
         const val MAX_LIFE: kotlin.Double = 100.0
         const val MAX_BULLETS: Int = 25
+        const val MAX_LIVES: Int = 3
+
+        private fun initPlayer() {
+            life = 100.0
+            bullets = 15
+        }
+        fun resetPlayer() {
+            initPlayer()
+            lives = 1
+            hasGun = false
+            tookLife = false
+        }
     }
 
     init {
         initPlayer()
         speed = 2
-        animation = Animation(speed, 4)
-    }
-
-    private fun initPlayer() {
-        life = 100.0
-        bullets = 15
+        moveAnimation = MoveAnimation(speed, 4)
+        blinkAnimation = BlinkAnimation(10)
     }
 
     private val playerFront: List<BufferedImage> = loadPlayerImages(32)
@@ -67,7 +81,7 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     override fun update() {
         movePlayer()
         if (shoot && hasGun) shoot()
-        animation.animate()
+        moveAnimation.animate()
     }
 
     private fun shoot() {
@@ -130,15 +144,15 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     override fun draw(graphics: Graphics) {
         if (goUp) {
             if (hasGun) graphicsDrawImage(REVOLVER_UP, graphics, y = y - 2)
-            graphicsDrawImage(playerBack[animation.currentAnimationIndex], graphics)
+            graphicsDrawImage(playerBack[moveAnimation.currentAnimationIndex], graphics)
         } else if (goDown) {
-            graphicsDrawImage(playerFront[animation.currentAnimationIndex], graphics)
+            graphicsDrawImage(playerFront[moveAnimation.currentAnimationIndex], graphics)
             if (hasGun) graphicsDrawImage(REVOLVER_DOWN, graphics, x - 8)
         } else if (goLeft) {
-            graphicsDrawImage(playerLeft[animation.currentAnimationIndex], graphics)
+            graphicsDrawImage(playerLeft[moveAnimation.currentAnimationIndex], graphics)
             if (hasGun) graphicsDrawImage(REVOLVER_LEFT, graphics, x - 8, y - 2)
         } else if (goRight) {
-            graphicsDrawImage(playerRight[animation.currentAnimationIndex], graphics)
+            graphicsDrawImage(playerRight[moveAnimation.currentAnimationIndex], graphics)
             if (hasGun) graphicsDrawImage(REVOLVER_RIGHT, graphics, x + 2, y - 2)
         } else drawLastSide(graphics)
 
@@ -176,7 +190,9 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
             LEFT.ordinal -> graphicsDrawImage(playerDamage[2], graphics)
             RIGHT.ordinal -> graphicsDrawImage(playerDamage[3], graphics)
         }
-        tookDamage = false
+
+        tookDamage = blinkAnimation.animate()
+
     }
 
     private fun graphicsDrawImage(image: BufferedImage, graphics: Graphics, x: Int = this.x, y: Int = this.y) {
@@ -185,13 +201,19 @@ class Player(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
     fun loseLife(damage: Int) {
         tookDamage = true
-        life -= damage
+        if (life > 0) life -= damage
         if (life > 0) println("entities.Player life: $life")
     }
 
     fun die() {
         println("entities.Player is dead")
-        Game.WORLD = World("/map.png")
+        if (lives > 1) {
+            lives--
+            WORLD.restartWorld()
+        } else if (lives == 1)
+            gameState = GAME_OVER
+
         return
+
     }
 }

@@ -23,6 +23,7 @@ open class Entity(
         val ENEMY = SPRITE_SHEET.getSprite(32, 51, 16, 16)
         val LIFE_PACK = SPRITE_SHEET.getSprite(32, 102, 16, 16)
         val PLAYER = SPRITE_SHEET.getSprite(32, 0, 16, 16)
+        val LIFE = SPRITE_SHEET.getSprite(112, 105, 16, 16)
         val REVOLVER_UP = SPRITE_SHEET.getSprite(83, 102, 16, 16)
         val REVOLVER_DOWN = SPRITE_SHEET.getSprite(97, 102, 16, 16)
         val REVOLVER_LEFT = SPRITE_SHEET.getSprite(66, 102, 16, 16)
@@ -35,8 +36,6 @@ open class Entity(
 
     open fun draw(graphics: Graphics) {
         graphics.drawImage(sprite, x - Camera.x, y - Camera.y, width, height, null)
-        graphics.color = Color.BLUE
-        graphics.drawRect(x, y, width, height)
     }
 }
 

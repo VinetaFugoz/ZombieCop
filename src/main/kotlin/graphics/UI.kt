@@ -1,6 +1,7 @@
 package graphics
 
-import entities.Entity.Companion.BULLET
+import Game.Companion.WIDTH
+import entities.Entity
 import entities.Player
 import java.awt.*
 
@@ -8,6 +9,7 @@ class UI {
 
     fun draw(graphics: Graphics2D) {
         drawLifeBar(graphics)
+        drawLives(graphics)
         drawAmmoBar(graphics)
     }
 
@@ -39,6 +41,12 @@ class UI {
         for (bullet: Int in 0..Player.bullets) {
             graphics.color = Color.YELLOW
             graphics.drawRect(4 + (bullet * 3), 15, 1, 6)
+        }
+    }
+
+    private fun drawLives(graphics: Graphics) {
+        for (life: Int in 1..Player.lives) {
+            graphics.drawImage(Entity.LIFE, WIDTH - 70 + (life * 16), 0, null)
         }
     }
 }

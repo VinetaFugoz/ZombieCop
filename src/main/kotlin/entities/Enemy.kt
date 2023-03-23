@@ -1,6 +1,7 @@
 package entities
 
-import Animation
+import BlinkAnimation
+import MoveAnimation
 import Game
 import Game.Companion.SPRITE_SHEET
 import SidesEnum.*
@@ -15,14 +16,16 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
     private var tookDamage: Boolean = false
     private val damage: Int = 5
     private var lastSide: Int = DOWN.ordinal
-    private val animation: Animation
+    private val moveAnimation: MoveAnimation
+    private val blinkAnimation: BlinkAnimation
     var life: kotlin.Double = 0.0
 
 
     init {
         life = 20.0
         speed = 2
-        animation = Animation(speed, 4)
+        moveAnimation = MoveAnimation(speed, 4)
+        blinkAnimation = BlinkAnimation(10)
     }
 
     private val enemyFront: List<BufferedImage> = loadEnemyImages(32)
@@ -67,7 +70,7 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
                 y -= speed
                 lastSide = UP.ordinal
             }
-            animation.animate()
+            moveAnimation.animate()
         }
     }
 
@@ -96,10 +99,10 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
 
     override fun draw(graphics: Graphics) {
         when (lastSide) {
-            UP.ordinal -> graphicsDrawImage(enemyBack[animation.currentAnimationIndex], graphics)
-            DOWN.ordinal -> graphicsDrawImage(enemyFront[animation.currentAnimationIndex], graphics)
-            LEFT.ordinal -> graphicsDrawImage(enemyLeft[animation.currentAnimationIndex], graphics)
-            RIGHT.ordinal -> graphicsDrawImage(enemyRight[animation.currentAnimationIndex], graphics)
+            UP.ordinal -> graphicsDrawImage(enemyBack[moveAnimation.currentAnimationIndex], graphics)
+            DOWN.ordinal -> graphicsDrawImage(enemyFront[moveAnimation.currentAnimationIndex], graphics)
+            LEFT.ordinal -> graphicsDrawImage(enemyLeft[moveAnimation.currentAnimationIndex], graphics)
+            RIGHT.ordinal -> graphicsDrawImage(enemyRight[moveAnimation.currentAnimationIndex], graphics)
         }
         drawLastSide(graphics)
         if (tookDamage) drawEnemyDamage(graphics)
@@ -112,7 +115,7 @@ class Enemy(sprite: BufferedImage, x: Int, y: Int) : Entity(sprite, x, y) {
             LEFT.ordinal -> graphicsDrawImage(enemyDamage[2], graphics)
             RIGHT.ordinal -> graphicsDrawImage(enemyDamage[3], graphics)
         }
-        tookDamage = false
+        tookDamage = blinkAnimation.animate()
     }
 
 
